@@ -21,12 +21,12 @@ export const authOptions: NextAuthOptions = {
               { email: credentials.identifier },
               { username: credentials.identifier },
             ],
-          }).select("+password");
+          });
           if (!user) {
-            throw new Error("No User Found For this Email");
+            throw new Error("No user found with this email");
           }
           if (!user.isVerified) {
-            throw new Error("Please Verify Your Account First");
+            throw new Error("Please verify your account before logging in");
           }
           const isPasswordCorrect = await bcrypt.compare(
             credentials.password,
@@ -35,39 +35,39 @@ export const authOptions: NextAuthOptions = {
           if (isPasswordCorrect) {
             return user;
           } else {
-            throw new Error("Incorrect Password");
+            throw new Error("Incorrect password");
           }
-        } catch (error: any) {
-          throw new Error(error);
+        } catch (err: any) {
+          throw new Error(err);
         }
       },
     }),
   ],
   callbacks: {
-    async session({ session, token }) {
-      if (token) {
-        session.user._id = token._id;
-        session.user.isVerified = token.isVerified;
-        session.user.isAcceptingMessage = token.isAcceptingMessage;
-        session.user.username = token.username;
-      }
-      return session;
-    },
     async jwt({ token, user }) {
       if (user) {
-        token._id = user._id?.toString();
+        token._id = user._id?.toString(); // Convert ObjectId to string
         token.isVerified = user.isVerified;
-        token.isAcceptingMessage = user.isAcceptingMessage;
+        token.isAcceptingMessages = user.isAcceptingMessages;
         token.username = user.username;
       }
       return token;
     },
-  },
-  pages: {
-    signIn: "/sign-in",
+    async session({ session, token }) {
+      if (token) {
+        session.user._id = token._id;
+        session.user.isVerified = token.isVerified;
+        session.user.isAcceptingMessages = token.isAcceptingMessages;
+        session.user.username = token.username;
+      }
+      return session;
+    },
   },
   session: {
     strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
+  pages: {
+    signIn: "/sign-in",
+  },
 };

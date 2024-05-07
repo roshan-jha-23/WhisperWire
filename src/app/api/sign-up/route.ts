@@ -1,43 +1,47 @@
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/User";
-import { sendVerificationEmail } from "@/helper/sendVerificationsEmail";
-
 import bcrypt from "bcryptjs";
+import { sendVerificationEmail } from "@/helper/sendVerificationsEmail";
 
 export async function POST(request: Request) {
   await dbConnect();
+
   try {
     const { username, email, password } = await request.json();
-    const existingUserVerifiedBYUsername = await UserModel.findOne({
+
+    const existingVerifiedUserByUsername = await UserModel.findOne({
       username,
       isVerified: true,
     });
-    if (existingUserVerifiedBYUsername) {
+
+    if (existingVerifiedUserByUsername) {
       return Response.json(
         {
           success: false,
-          message: "Username Already Taken",
+          message: "Username is already taken",
         },
         { status: 400 }
       );
     }
+
     const existingUserByEmail = await UserModel.findOne({ email });
-    const OTP = Math.floor(100000 + Math.random() * 900000).toString();
+    let verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+
     if (existingUserByEmail) {
-      if(existingUserByEmail.isVerified){
+      if (existingUserByEmail.isVerified) {
         return Response.json(
           {
             success: false,
-            message: "User Alreday registered with this email"
+            message: "User already exists with this email",
           },
           { status: 400 }
         );
-      }else{
-        const hashedPassword=await bcrypt.hash(password,10)
-        existingUserByEmail.password=hashedPassword;
-        existingUserByEmail.verifyCode=OTP;
-        existingUserByEmail.verifyCodeExpiry=new Date(Date.now()+3600000)
-        await existingUserByEmail.save()
+      } else {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        existingUserByEmail.password = hashedPassword;
+        existingUserByEmail.verifyCode = verifyCode;
+        existingUserByEmail.verifyCodeExpiry = new Date(Date.now() + 3600000);
+        await existingUserByEmail.save();
       }
     } else {
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -48,37 +52,47 @@ export async function POST(request: Request) {
         username,
         email,
         password: hashedPassword,
-        verifyCode: OTP,
+        verifyCode,
         verifyCodeExpiry: expiryDate,
         isVerified: false,
-        isAcceptingMessage: true,
+        isAcceptingMessages: true,
         messages: [],
       });
+
       await newUser.save();
     }
-      // Send Verification Email to user's registered email id with the generated OTP
-      const emailResponse = await sendVerificationEmail(email, username, OTP);
-      if (!emailResponse.success) {
-        return Response.json(
-          { success: false, message: emailResponse.message },
-          { status: 500 }
-        );
-      }
+
+    // Send verification email
+    const emailResponse = await sendVerificationEmail(
+      email,
+      username,
+      verifyCode
+    );
+    if (!emailResponse.success) {
       return Response.json(
-        { success: false, message: emailResponse.message },
+        {
+          success: false,
+          message: emailResponse.message,
+        },
         { status: 500 }
       );
     }
-  catch (error) {
-    console.log("Error while Resgistering the user");
+
+    return Response.json(
+      {
+        success: true,
+        message: "User registered successfully. Please verify your account.",
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("Error registering user:", error);
     return Response.json(
       {
         success: false,
-        message: "Error while Resgistaring the User",
+        message: "Error registering user",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }

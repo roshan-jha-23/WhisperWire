@@ -4,7 +4,8 @@ export interface Message extends Document {
   content: string;
   createdAt: Date;
 }
-const MessageSchema: Schema<Message> = new Schema({
+
+const MessageSchema: Schema<Message> = new mongoose.Schema({
   content: {
     type: String,
     required: true,
@@ -12,57 +13,54 @@ const MessageSchema: Schema<Message> = new Schema({
   createdAt: {
     type: Date,
     required: true,
-    default: Date.now(),
+    default: Date.now,
   },
 });
+
 export interface User extends Document {
   username: string;
-  password?: string;
   email: string;
+  password: string;
   verifyCode: string;
   verifyCodeExpiry: Date;
   isVerified: boolean;
-  isAcceptingMessage: boolean;
+  isAcceptingMessages: boolean;
   messages: Message[];
 }
-const UserSchema: Schema<User> = new Schema({
+
+// Updated User schema
+const UserSchema: Schema<User> = new mongoose.Schema({
   username: {
     type: String,
-    required: [true, "Username is a Required Field"],
-    unique: true,
+    required: [true, "Username is required"],
     trim: true,
-    lowercase: true,
+    unique: true,
   },
   email: {
     type: String,
-    required: [true, "Email is required field"],
+    required: [true, "Email is required"],
     unique: true,
-    match: [
-      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-      "Please enter a valid email address",
-    ],
+    match: [/.+\@.+\..+/, "Please use a valid email address"],
   },
   password: {
     type: String,
-    required: [true, "Password  cannot be empty"],
-    select: false,
+    required: [true, "Password is required"],
   },
   verifyCode: {
     type: String,
-    required: [false, "Verification code cannot be empty"],
-    select: false,
+    required: [true, "Verify Code is required"],
   },
   verifyCodeExpiry: {
     type: Date,
-    required: true,
+    required: [true, "Verify Code Expiry is required"],
   },
   isVerified: {
     type: Boolean,
     default: false,
   },
-  isAcceptingMessage: {
+  isAcceptingMessages: {
     type: Boolean,
-    default: false,
+    default: true,
   },
   messages: [MessageSchema],
 });
@@ -70,4 +68,5 @@ const UserSchema: Schema<User> = new Schema({
 const UserModel =
   (mongoose.models.User as mongoose.Model<User>) ||
   mongoose.model<User>("User", UserSchema);
+
 export default UserModel;
