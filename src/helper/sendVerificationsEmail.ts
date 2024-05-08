@@ -10,7 +10,7 @@ export async function sendVerificationEmail(
 
   try {
     await resend.emails.send({
-      from: "Support <onboarding@resend.dev>",
+      from: "onboarding@resend.dev",
       to: email,
       subject: "Mystery Message Verification Code",
       react: VerificationEmail({ username,  verifyCode }),
