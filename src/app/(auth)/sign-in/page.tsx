@@ -38,6 +38,7 @@ export default function SignInForm() {
     });
     console.log(result,"haha")
     if (result?.error) {
+      console.log(result.error, "cry aa raha hai");
       if (result.error === "CredentialsSignin") {
         toast({
           title: "Login Failed",
