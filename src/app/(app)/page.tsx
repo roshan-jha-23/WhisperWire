@@ -64,6 +64,32 @@ export default function Home() {
         <span style={{ fontWeight: "bold", fontStyle: "italic" }}>
           Roshan Jha
         </span>
+        <div className="mt-4">
+          <a
+            href="https://twitter.com/lonely_sheperd_"
+            className="text-white mr-4"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Twitter
+          </a>
+          <a
+            href="https://www.linkedin.com/in/roshan-jha-20m10/"
+            className="text-white mr-4"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            LinkedIn
+          </a>
+          <a
+            href="https://github.com/roshan-jha-23"
+            className="text-white"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHub
+          </a>
+        </div>
       </footer>
     </>
   );

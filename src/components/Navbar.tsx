@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import React from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
@@ -17,7 +17,20 @@ function Navbar() {
         </a>
         {session ? (
           <>
-            <span className="mr-4">SWAGAT HAI AAPKA {user?.username || user?.email}</span>
+            <span className="mr-4">
+              Welcome{" "}
+              <span
+                style={{
+                  border: "2px solid #4CAF50", // Change the color code as per your preference
+                  padding: "5px 10px",
+                  borderRadius: "5px",
+                  color: "#4CAF50", // Same color as the border for text
+                }}
+              >
+                {user?.username || user?.email}
+              </span>{" "}
+              to the Whisper Wire
+            </span>
             <Button
               onClick={() => signOut()}
               className="w-full md:w-auto bg-slate-100 text-black"
