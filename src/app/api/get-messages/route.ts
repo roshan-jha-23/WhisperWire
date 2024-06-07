@@ -1,65 +1,52 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/options";
+import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/User";
-import { User } from "next-auth";
+import { getDataFromToken } from "@/helper/getDataFromToken";
 import mongoose from "mongoose";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   await dbConnect();
 
-  const session = await getServerSession(authOptions);
-
-  const user: User = session?.user as User;
-
-  if (!session || !session.user) {
-    return Response.json(
-      { success: false, message: "Not authenticated" },
-      { status: 401 }
-    );
-  }
-  //bcoz while defining user types we are taking it as a string but while writting aggretation pipelines we need object id so we converted it to mongoose id
-  const userId = new mongoose.Types.ObjectId(user._id);
-
   try {
+    const userId = await getDataFromToken(request);
+
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, message: "Not authenticated" },
+        { status: 401 }
+      );
+    }
+
     const user = await UserModel.aggregate([
       {
-        $match: { id: userId },
+        $match: { _id: new mongoose.Types.ObjectId(userId) },
       },
       {
         $unwind: "$messages",
       },
       {
-        $sort: { "$messages.createdAt": -1 },
+        $sort: { "messages.createdAt": -1 },
       },
       {
         $group: { _id: "$_id", messages: { $push: "$messages" } },
       },
     ]);
+
     if (!user || user.length === 0) {
-      return Response.json(
-        {
-          success: false,
-          message: "User Not found",
-        },
-        {
-          status: 404,
-        }
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
       );
     }
-    return Response.json(
-      {
-        success: true,
-        message: user[0].messages,
-      },
-      {
-        status: 200,
-      }
+
+    return NextResponse.json(
+      { success: true, messages: user[0].messages },
+      { status: 200 }
     );
   } catch (error) {
     console.error("An unexpected error occurred:", error);
-    return Response.json(
-      { message: "Internal server error", success: false },
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
       { status: 500 }
     );
   }

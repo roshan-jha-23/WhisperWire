@@ -1,46 +1,51 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/options";
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/User";
-import { User } from "next-auth";
 import mongoose from "mongoose";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function DELETE(request: Request,{params}:{params:{messageid:string}}) {
-  const messageId=params.messageid
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { messageId: string } }
+) {
+  const messageId = params.messageId;
   await dbConnect();
 
-  const session = await getServerSession(authOptions);
+  // Assuming the user is authenticated using token-based approach
+  const userId = "user's ID"; // Extract the authenticated user's ID from the token
 
-  const user: User = session?.user as User;
-
-  if (!session || !session.user) {
-    return Response.json(
+  if (!userId) {
+    return NextResponse.json(
       { success: false, message: "Not authenticated" },
       { status: 401 }
     );
   }
+
   try {
-   const updatedResult= await UserModel.updateOne(
-      {_id:user._id},
-      {$pull:{messages:{_id:messageId}}}
-    )
-    if(updatedResult.modifiedCount===0){
-         return Response.json(
-           { success: false, message: "Not Able to Fulfill request at the moment please try again later" },
-           { status: 401 }
-         );
-    }
-    return Response.json(
-      { success: true, message: "Succefully Message deleted" },
-      { status: 401 }
+    const updatedResult = await UserModel.updateOne(
+      { _id: userId },
+      { $pull: { messages: { _id: messageId } } }
     );
-    
-  } catch (error) {
-    return Response.json(
-      { success: false, message: "Not authenticated" },
-      { status: 401 }
-    );
-  }
- 
-  }
 
+    if (updatedResult.modifiedCount === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Not able to fulfill request at the moment, please try again later",
+        },
+        { status: 400 } // Using 400 Bad Request status code for failure
+      );
+    }
+
+    return NextResponse.json(
+      { success: true, message: "Successfully deleted the message" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("An unexpected error occurred:", error);
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
