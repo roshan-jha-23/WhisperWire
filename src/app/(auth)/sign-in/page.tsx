@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { signIn } from "next-auth/react";
+import axios from "axios";
 import {
   Form,
   FormField,
@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"; // Use next/router here
 import { useToast } from "@/components/ui/use-toast";
 import { signInSchema } from "@/schemas/signInSchema";
 
@@ -30,33 +30,30 @@ export default function SignInForm() {
   });
 
   const { toast } = useToast();
-  const onSubmit = async (data: z.infer<typeof signInSchema>) => {
-    const result = await signIn("credentials", {
-      redirect: false,
-      identifier: data.identifier,
-      password: data.password,
-    });
-    console.log(result,"haha")
-    if (result?.error) {
-      console.log(result.error, "cry aa raha hai");
-      if (result.error === "CredentialsSignin") {
-        toast({
-          title: "Login Failed",
-          description: "Incorrect username or password",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
-      }
-    }
 
-  
-      router.push("/dashboard");
-    
+  const onSubmit = async (data: z.infer<typeof signInSchema>) => {
+    try {
+      const response = await axios.post("/api/sign-in", {
+        identifier: data.identifier,
+        password: data.password,
+      });
+
+      console.log("Sign-in response:", response); // Debug log
+
+      if (response.status === 200) {
+        console.log("Redirecting to dashboard..."); // Debug log
+        router.push("/dashboard");
+      } else {
+        throw new Error(response.data?.message || "Sign-in failed");
+      }
+    } catch (error:any) {
+      console.error("Error:", error); // Debug log
+      toast({
+        title: "Login Failed",
+        description: error.response?.data?.message || error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -75,7 +72,7 @@ export default function SignInForm() {
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email/Username</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <Input {...field} />
                   <FormMessage />
                 </FormItem>

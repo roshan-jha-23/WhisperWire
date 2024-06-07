@@ -1,25 +1,64 @@
-import { resend } from "@/lib/resend";
-import VerificationEmail from "../../emails/VerificationEmail";
-import { ApiResponse } from "@/types/ApiResponse";
+import nodemailer from "nodemailer";
+import bcryptjs from "bcryptjs";
+import User from "@/model/User";
 
-export async function sendVerificationEmail(
-  email: string,
-  username: string,
-  verifyCode: string
-): Promise<ApiResponse> {
-
+export const sendEmail = async ({
+  email,
+  otp,
+  username,
+  emailType,
+  userId,
+}:any) => {
   try {
-    await resend.emails.send({
-      from: "onboarding@resend.dev",
-      to: email,
-      subject: "Mystery Message Verification Code",
-      react: VerificationEmail({ username,  verifyCode }),
+    if (
+      !process.env.SENDER_MAIL ||
+      !process.env.SENDER_MAIL_PASS ||
+      !process.env.DOMAIN
+    ) {
+      throw new Error("Missing environment variables");
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.SENDER_MAIL,
+        pass: process.env.SENDER_MAIL_PASS,
+      },
     });
-  
-    return { success: true, message: "Verification email sent successfully." };
-   
-  } catch (emailError) {
-    console.error("Error sending verification email:", emailError);
-    return { success: false, message: "Failed to send verification email." };
+
+    const salt = await bcryptjs.genSalt(10);
+    const hashedOtp = await bcryptjs.hash(otp, salt);
+
+    const updateUserFields = {
+      verifyToken: hashedOtp,
+      verifyTokenExpiry: Date.now() + 3600000, // 1 hour
+    };
+
+    await User.findByIdAndUpdate(userId, { $set: updateUserFields });
+
+    const mailOptions = {
+      from: process.env.SENDER_MAIL,
+      to: email,
+      subject: `Your OTP Code`,
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+          <h2>Hello, ${username}</h2>
+          <p>Thank you for registering. Your OTP code is below:</p>
+          <h3>${otp}</h3>
+          <p>This OTP is valid for 1 hour.</p>
+          <p>If you did not request this, please ignore this email.</p>
+          <p>Thanks,</p>
+          <p>Your Company Team</p>
+        </div>
+      `,
+    };
+
+    const mailResponse = await transporter.sendMail(mailOptions);
+    return {
+      success: true,
+      message: "OTP email sent successfully",
+    };
+  } catch (error:any) {
+    throw new Error(error.message);
   }
-}
+};
