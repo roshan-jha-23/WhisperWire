@@ -54,9 +54,9 @@ export default function SignInForm() {
       }
     }
 
-    if (result?.url) {
+  
       router.push("/dashboard");
-    }
+    
   };
 
   return (
