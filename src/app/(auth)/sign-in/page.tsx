@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ApiResponse } from "@/types/ApiResponse";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import axios from "axios";
@@ -14,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // Use next/router here
+import { useRouter } from "next/navigation"; // 
 import { useToast } from "@/components/ui/use-toast";
 import { signInSchema } from "@/schemas/signInSchema";
 
@@ -24,7 +25,7 @@ export default function SignInForm() {
   const form = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      identifier: "",
+      email: "",
       password: "",
     },
   });
@@ -33,21 +34,13 @@ export default function SignInForm() {
 
   const onSubmit = async (data: z.infer<typeof signInSchema>) => {
     try {
-      const response = await axios.post("/api/sign-in", {
-        identifier: data.identifier,
-        password: data.password,
-      });
+      
+     const response = await axios.post<ApiResponse>("/api/sign-in", data);
 
-      console.log("Sign-in response:", response); // Debug log
-
-      if (response.status === 200) {
-        console.log("Redirecting to dashboard..."); // Debug log
-        router.push("/dashboard");
-      } else {
-        throw new Error(response.data?.message || "Sign-in failed");
-      }
-    } catch (error:any) {
-      console.error("Error:", error); // Debug log
+     
+      router.push("/dashboard");
+    } catch (error: any) {
+      console.error("Error:", error); 
       toast({
         title: "Login Failed",
         description: error.response?.data?.message || error.message,
@@ -68,7 +61,7 @@ export default function SignInForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
-              name="identifier"
+              name="email"
               control={form.control}
               render={({ field }) => (
                 <FormItem>

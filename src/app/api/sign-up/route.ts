@@ -64,7 +64,7 @@ export async function POST(request:NextRequest) {
       await newUser.save();
     }
 
-    // Send OTP email
+ 
     const emailResponse = await sendEmail({
       email,
       otp,

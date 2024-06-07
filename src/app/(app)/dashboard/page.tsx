@@ -10,24 +10,15 @@ import { ApiResponse } from "@/types/ApiResponse";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios, { AxiosError } from "axios";
 import { Loader2, RefreshCcw } from "lucide-react";
-import { User } from "next-auth";
-import { useSession } from "next-auth/react";
 import React, { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { acceptMessageSchema } from "@/schemas/acceptMessageSchema";
-
 function UserDashboard() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSwitchLoading, setIsSwitchLoading] = useState(false);
-
+  const [session, setSession] = useState<User | null>(null);
   const { toast } = useToast();
-
-  const handleDeleteMessage = (messageId: string) => {
-    setMessages(messages.filter((message) => message._id !== messageId));
-  };
-
-  const { data: session } = useSession();
 
   const form = useForm({
     resolver: zodResolver(acceptMessageSchema),
@@ -42,12 +33,10 @@ function UserDashboard() {
       const response = await axios.get<ApiResponse>("/api/accept-messages");
       setValue("acceptMessages", response.data.isAcceptingMessage);
     } catch (error) {
-      const axiosError = error as AxiosError<ApiResponse>;
       toast({
         title: "Error",
         description:
-          axiosError.response?.data.message ??
-          "Failed to fetch message settings",
+          error.response?.data.message ?? "Failed to fetch message settings",
         variant: "destructive",
       });
     } finally {
@@ -69,11 +58,10 @@ function UserDashboard() {
           });
         }
       } catch (error) {
-        const axiosError = error as AxiosError<ApiResponse>;
         toast({
           title: "Error",
           description:
-            axiosError.response?.data.message ?? "Failed to fetch messages",
+            error.response?.data.message ?? "Failed to fetch messages",
           variant: "destructive",
         });
       } finally {
@@ -81,19 +69,29 @@ function UserDashboard() {
         setIsSwitchLoading(false);
       }
     },
-    [setIsLoading, setMessages, toast]
+    [toast]
   );
 
-  // Fetch initial state from the server
   useEffect(() => {
-    if (!session || !session.user) return;
+    const token = Cookies.get("token");
+    if (!token) return;
 
-    fetchMessages();
+    const fetchSession = async () => {
+      try {
+        const response = await axios.post<ApiResponse>("/api/verify-token", {
+          token,
+        });
+        setSession(response.data.user);
+        fetchMessages();
+        fetchAcceptMessages();
+      } catch (error) {
+        console.error("Failed to verify token:", error);
+      }
+    };
 
-    fetchAcceptMessages();
-  }, [session, setValue, toast, fetchAcceptMessages, fetchMessages]);
+    fetchSession();
+  }, [fetchMessages, fetchAcceptMessages]);
 
-  // Handle switch change
   const handleSwitchChange = async () => {
     try {
       const response = await axios.post<ApiResponse>("/api/accept-messages", {
@@ -105,23 +103,20 @@ function UserDashboard() {
         variant: "default",
       });
     } catch (error) {
-      const axiosError = error as AxiosError<ApiResponse>;
       toast({
         title: "Error",
         description:
-          axiosError.response?.data.message ??
-          "Failed to update message settings",
+          error.response?.data.message ?? "Failed to update message settings",
         variant: "destructive",
       });
     }
   };
 
-  if (!session || !session.user) {
-    return <div></div>;
+  if (!session) {
+    return <div>Loading...</div>;
   }
 
-  const { username } = session.user as User;
-
+  const { username } = session;
   const baseUrl = `${window.location.protocol}//${window.location.host}`;
   const profileUrl = `${baseUrl}/u/${username}`;
 
@@ -138,7 +133,7 @@ function UserDashboard() {
       <h1 className="text-4xl font-bold mb-4">User Dashboard</h1>
 
       <div className="mb-4">
-        <h2 className="text-lg font-semibold mb-2">Copy Your Unique Link</h2>{" "}
+        <h2 className="text-lg font-semibold mb-2">Copy Your Unique Link</h2>
         <div className="flex items-center">
           <input
             type="text"
@@ -179,7 +174,7 @@ function UserDashboard() {
       </Button>
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
         {messages.length > 0 ? (
-          messages.map((message, index) => (
+          messages.map((message) => (
             <MessageCard
               key={message._id}
               message={message}
