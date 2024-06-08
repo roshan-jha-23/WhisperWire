@@ -12,8 +12,7 @@ export const sendEmail = async ({
   try {
     if (
       !process.env.SENDER_MAIL ||
-      !process.env.SENDER_MAIL_PASS ||
-      !process.env.DOMAIN
+      !process.env.SENDER_MAIL_PASS 
     ) {
       throw new Error("Missing environment variables");
     }
