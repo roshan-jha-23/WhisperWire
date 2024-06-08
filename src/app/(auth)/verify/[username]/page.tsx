@@ -54,13 +54,13 @@ function VerifyAccount() {
   };
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-800">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
+      <div className="w-full max-w-md p-8 space-y-8 bg-black rounded-lg shadow-md">
         <div className="text-center">
-          <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-6">
+          <h1 className="text-4xl text-white font-extrabold tracking-tight lg:text-5xl mb-6">
             Verify Your Account
           </h1>
-          <p className="mb-4">
-            Enter The Verification Code You Recived in Your Signu-up email
+          <p className="mb-4 text-white">
+            Enter The Verification Code You Received Your Email.
           </p>
         </div>
         <Form {...form}>
@@ -76,7 +76,7 @@ function VerifyAccount() {
                 </FormItem>
               )}
             />
-            <Button type="submit">Verify</Button>
+            <Button type="submit" className="hover:bg-green-600 hover:text-white">Verify</Button>
           </form>
         </Form>
       </div>

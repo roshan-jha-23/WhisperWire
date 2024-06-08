@@ -85,7 +85,7 @@ function UserDashboard() {
     try {
       const response = await axios.get("/api/me");
       setUser(response.data.data);
-      console.log(response.data)
+      console.log(response.data);
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse>;
       toast({
@@ -128,12 +128,11 @@ function UserDashboard() {
     }
   };
 
-
-  if (user==null) {
+  if (user == null) {
     return <div>Loading...</div>;
   }
 
-  const  username  = user.username;
+  const username = user.username;
 
   const baseUrl = `${window.location.protocol}//${window.location.host}`;
   const profileUrl = `${baseUrl}/u/${username}`;
@@ -147,19 +146,23 @@ function UserDashboard() {
   };
 
   return (
-    <div className="my-8 mx-4 md:mx-8 lg:mx-auto p-6 bg-white rounded w-full max-w-6xl">
-      <h1 className="text-4xl font-bold mb-4">User Dashboard</h1>
+    <div className="my-8 mx-4 md:mx-8 lg:mx-auto text-red-500 p-6 bg-black rounded w-full max-w-6xl shadow-2xl">
+      <h1 className="text-4xl font-bold text-red-500 mb-4">User Dashboard</h1>
 
       <div className="mb-4">
-        <h2 className="text-lg font-semibold mb-2">Copy Your Unique Link</h2>{" "}
+        <h2 className="text-lg font-semibold mb-2 text-red-500">
+          Copy Your Unique Link
+        </h2>{" "}
         <div className="flex items-center">
           <input
             type="text"
             value={profileUrl}
             disabled
-            className="input input-bordered w-full p-2 mr-2"
+            className="input input-bordered w-full p-2 mr-2 bg-gray-800 text-white border-red-500"
           />
-          <Button onClick={copyToClipboard}>Copy</Button>
+          <Button className="bg-red-500 text-white" onClick={copyToClipboard}>
+            Copy
+          </Button>
         </div>
       </div>
 
@@ -169,15 +172,16 @@ function UserDashboard() {
           checked={acceptMessages}
           onCheckedChange={handleSwitchChange}
           disabled={isSwitchLoading}
+          className="bg-gray-800 border-red-500"
         />
-        <span className="ml-2">
+        <span className="ml-2 text-red-500">
           Accept Messages: {acceptMessages ? "On" : "Off"}
         </span>
       </div>
-      <Separator />
+      <Separator className="border-red-500" />
 
       <Button
-        className="mt-4"
+        className="mt-4 bg-black border-red-500 text-red-500"
         variant="outline"
         onClick={(e) => {
           e.preventDefault();
@@ -185,9 +189,9 @@ function UserDashboard() {
         }}
       >
         {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="h-4 w-4 animate-spin text-red-500" />
         ) : (
-          <RefreshCcw className="h-4 w-4" />
+          <RefreshCcw className="h-4 w-4 text-red-500" />
         )}
       </Button>
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -197,10 +201,11 @@ function UserDashboard() {
               key={message._id}
               message={message}
               onMessageDelete={handleDeleteMessage}
+              
             />
           ))
         ) : (
-          <p>No messages to display.</p>
+          <p className="text-red-500">No messages to display.</p>
         )}
       </div>
     </div>

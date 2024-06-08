@@ -1,3 +1,4 @@
+import { getDataFromToken } from "@/helper/getDataFromToken";
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/User";
 import mongoose from "mongoose";
@@ -7,11 +8,12 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { messageId: string } }
 ) {
-  const messageId = params.messageId;
   await dbConnect();
+  const messageId = params.messageId;
+  
 
   // Assuming the user is authenticated using token-based approach
-  const userId = "user's ID"; // Extract the authenticated user's ID from the token
+  const userId = await getDataFromToken(request); // Extract the authenticated user's ID from the token
 
   if (!userId) {
     return NextResponse.json(
@@ -21,11 +23,12 @@ export async function DELETE(
   }
 
   try {
-    const updatedResult = await UserModel.updateOne(
-      { _id: userId },
-      { $pull: { messages: { _id: messageId } } }
-    );
+  const updatedResult = await UserModel.updateOne(
+    { _id: (userId) },
+    { $pull: { messages: { _id: messageId } } } 
+  );
 
+    console.log(updatedResult)
     if (updatedResult.modifiedCount === 0) {
       return NextResponse.json(
         {
