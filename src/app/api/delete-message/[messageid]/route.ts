@@ -6,14 +6,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { messageId: string } }
+  { params }: { params: { messageid: string } }
 ) {
   await dbConnect();
-  const messageId = params.messageId;
+  const messageid = params.messageid;
   
 
-  // Assuming the user is authenticated using token-based approach
-  const userId = await getDataFromToken(request); // Extract the authenticated user's ID from the token
+  const userId = await getDataFromToken(request); 
 
   if (!userId) {
     return NextResponse.json(
@@ -25,7 +24,7 @@ export async function DELETE(
   try {
   const updatedResult = await UserModel.updateOne(
     { _id: (userId) },
-    { $pull: { messages: { _id: messageId } } } 
+    { $pull: { messages: { _id: messageid } } } 
   );
 
     console.log(updatedResult)
